@@ -3,46 +3,116 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>清障队 · 已入库倒木记录</title>
+<title>清障队 · 倒木点位分批导入</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 <header>
-  <h1>🪓 清障队 · 已入库倒木记录</h1>
-  <p class="net-status">共 {{ records|length }} 笔（仅显示已确认入库的记录）</p>
+  <h1>🪓 清障队 · 倒木点位分批导入</h1>
+  <p class="net-status">已入库 {{ records|length }} 笔 · 共 {{ batches|length }} 批（本页需联网）</p>
 </header>
 
-<main>
-  {% if records %}
-  <table class="records-table">
-    <thead>
-      <tr>
-        <th>#</th><th>现场照片</th><th>纬度</th><th>经度</th>
-        <th>备注</th><th>采集时间</th><th>入库时间</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in records %}
-      <tr>
-        <td>{{ r["id"] }}</td>
-        <td>
-          <a href="/photos/{{ r['photo'] }}" target="_blank">
-            <img src="/photos/{{ r['photo'] }}" alt="倒木照片" class="thumb">
-          </a>
-        </td>
-        <td>{{ "%.6f"|format(r["lat"]) }}</td>
-        <td>{{ "%.6f"|format(r["lng"]) }}</td>
-        <td>{{ r["note"] }}</td>
-        <td>{{ r["created_at"][:19].replace("T", " ") }}</td>
-        <td>{{ r["uploaded_at"][:19].replace("T", " ") }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <p class="empty">暂无已入库记录。</p>
-  {% endif %}
+<main class="wide">
+  <!-- 当前 / 领取批次 -->
+  <section class="card">
+    <h2>① 领批与下载</h2>
+    <button id="claimBtn" class="btn primary">📦 领取批次</button>
+    <p id="claimStatus" class="hint"></p>
+
+    <div id="currentBatch" hidden>
+      <div class="batch-head">
+        <strong>当前批次 <span id="curBatchNo" class="batch-no"></span></strong>
+        <span id="curBatchMeta" class="hint"></span>
+      </div>
+      <a id="downloadGeo" class="btn secondary" download>⬇️ 下载本批 WGS84 GeoJSON</a>
+
+      <h3>本批点位（<span id="curItemCount">0</span>）</h3>
+      <p class="hint">批内点位在领批时固定；之后补传的新点不会加入本批。</p>
+      <table class="records-table compact">
+        <thead>
+          <tr><th>原入库编号<br><small>record_id</small></th><th>纬度</th><th>经度</th>
+              <th>备注</th><th>入库时间</th></tr>
+        </thead>
+        <tbody id="curItems"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 按批号：重下 / 上传回执 -->
+  <section class="card">
+    <h2>② 按批号下载与上传回执</h2>
+    <div class="row">
+      <label style="flex:1">选择批号
+        <select id="batchSelect"></select>
+      </label>
+      <a id="redownloadGeo" class="btn secondary" download>⬇️ 下载该批 GeoJSON</a>
+    </div>
+    <p class="hint">已结批次保留原批号与固定点位，可随时按批号重新下载。</p>
+
+    <h3>上传导入回执（签收 &amp; 结批）</h3>
+    <p class="hint">
+      CSV 首行表头需含 <code>record_id</code> 列，只列导入成功的编号；
+      只有表头表示全批未导入。含批外编号或格式有误则整份退回，不改变签收状态。
+    </p>
+    <div class="row">
+      <input type="file" id="receiptFile" accept=".csv,text/csv">
+      <button id="receiptBtn" class="btn primary">📥 上传回执</button>
+    </div>
+    <button id="templateBtn" class="btn secondary">下载回执模板（仅表头，按所选批号）</button>
+    <p id="receiptStatus" class="hint"></p>
+    <div id="receiptResult" hidden></div>
+  </section>
+
+  <!-- 批次历史 -->
+  <section class="card">
+    <h2>批次记录</h2>
+    <table class="records-table compact">
+      <thead>
+        <tr><th>批号</th><th>状态</th><th>点位</th><th>已签收</th>
+            <th>未签收结转</th><th>领批时间</th><th>结批时间</th><th>下载</th></tr>
+      </thead>
+      <tbody id="batchRows"></tbody>
+    </table>
+    <p id="batchEmpty" class="empty" hidden>暂无批次。</p>
+  </section>
+
+  <!-- 已入库记录 -->
+  <section class="card">
+    <h2>已入库倒木记录</h2>
+    {% if records %}
+    <table class="records-table">
+      <thead>
+        <tr>
+          <th>#</th><th>现场照片</th><th>纬度</th><th>经度</th>
+          <th>备注</th><th>采集时间</th><th>入库时间</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td>{{ r["id"] }}</td>
+          <td>
+            <a href="/photos/{{ r['photo'] }}" target="_blank">
+              <img src="/photos/{{ r['photo'] }}" alt="倒木照片" class="thumb">
+            </a>
+          </td>
+          <td>{{ "%.6f"|format(r["lat"]) }}</td>
+          <td>{{ "%.6f"|format(r["lng"]) }}</td>
+          <td>{{ r["note"] }}</td>
+          <td>{{ r["created_at"][:19].replace("T", " ") }}</td>
+          <td>{{ r["uploaded_at"][:19].replace("T", " ") }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">暂无已入库记录。</p>
+    {% endif %}
+  </section>
+
   <p class="footer-link"><a href="/">← 返回采集页</a></p>
 </main>
+
+<script src="/static/batches.js"></script>
 </body>
 </html>

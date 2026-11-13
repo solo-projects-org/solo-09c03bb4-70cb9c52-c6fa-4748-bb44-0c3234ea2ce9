@@ -19,6 +19,7 @@ header h1 { font-size: 1.25rem; }
 .net-status.offline { color: #ffd0a8; }
 
 main { max-width: 720px; margin: 0 auto; padding: 16px; }
+main.wide { max-width: 980px; }
 
 .card {
   background: #fff;
@@ -74,6 +75,17 @@ input, textarea {
   flex-shrink: 0;
 }
 
+h3 { font-size: .98rem; margin: 18px 0 8px; }
+code { background: #eef3e7; padding: 1px 4px; border-radius: 3px; font-size: .85em; }
+
+.batch-head { margin: 12px 0 8px; }
+.batch-no { color: #2d5a27; font-size: 1.05rem; }
+.signed-row { background: #f3f8ef; color: #6b7a5e; }
+.receipt-ok    { color: #24621d; font-weight: 600; margin-top: 8px; }
+.receipt-error { color: #a12b1e; font-weight: 600; margin-top: 8px; }
+a.btn { text-align: center; text-decoration: none; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+
 .records-table {
   width: 100%;
   border-collapse: collapse;
@@ -87,6 +99,10 @@ input, textarea {
   vertical-align: middle;
 }
 .records-table th { background: #e8efe0; }
+.records-table.compact { font-size: .82rem; }
+.records-table.compact td, .records-table.compact th { padding: 5px 6px; }
+select { width: 100%; padding: 9px 10px; border: 1px solid #c4cdb8;
+         border-radius: 6px; font-size: 1rem; background: #fbfdfa; }
 .empty { padding: 24px; text-align: center; color: #6b7a5e; }
 
 .footer-link { text-align: center; margin: 18px 0 30px; font-size: .9rem; }
